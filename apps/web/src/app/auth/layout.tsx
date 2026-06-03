@@ -8,27 +8,30 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (user) {
-    let role = user.user_metadata?.role || user.app_metadata?.role;
-    if (!role) {
-      const { data: userData } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      role = userData?.role;
-    }
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (role === "DOCTOR") {
-      redirect("/doctor/dashboard");
-    } else if (role === "ADMIN") {
-      redirect("/admin/approvals");
-    } else {
-      redirect("/dashboard");
+    if (user) {
+      let role = user.user_metadata?.role || user.app_metadata?.role;
+      if (!role) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        role = userData?.role;
+      }
+
+      if (role === "DOCTOR") {
+        redirect("/doctor/dashboard");
+      } else if (role === "ADMIN") {
+        redirect("/admin/approvals");
+      } else {
+        redirect("/dashboard");
+      }
     }
   }
 

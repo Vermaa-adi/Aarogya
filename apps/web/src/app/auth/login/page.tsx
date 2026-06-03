@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { loginWithEmail, loginWithOtp } from "./actions";
 
-export default function PatientLoginPage() {
+function PatientLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
@@ -207,5 +207,20 @@ export default function PatientLoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function PatientLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal mx-auto"></div>
+          <p className="text-xs text-ink-light mt-2">Loading form...</p>
+        </div>
+      }
+    >
+      <PatientLoginForm />
+    </Suspense>
   );
 }

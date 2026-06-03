@@ -3,11 +3,18 @@ import { createClient as createBaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export async function createClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || url === "your-supabase-url" || !anonKey || anonKey === "your-supabase-anon-key") {
+    return null as unknown as ReturnType<typeof createSSRClient>;
+  }
+
   const cookieStore = await cookies();
 
   return createSSRClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {
@@ -28,13 +35,13 @@ export async function createClient() {
   );
 }
 
-/**
- * Admin client using the service role key — bypasses RLS.
- * ONLY use in Server Actions after verifying role === ADMIN.
- */
 export async function createAdminClient() {
-  return createBaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || url === "your-supabase-url" || !serviceRoleKey || serviceRoleKey === "your-service-role-key") {
+    return null as unknown as ReturnType<typeof createBaseClient>;
+  }
+
+  return createBaseClient(url, serviceRoleKey);
 }
