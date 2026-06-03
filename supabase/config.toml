@@ -1,0 +1,20 @@
+[project]
+id = "your-supabase-project-id"
+name = "Aarogya"
+
+[api]
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+
+[auth.external.phone]
+enabled = true
+
+[storage]
+file_size_limit = "10MB"

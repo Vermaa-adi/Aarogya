@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* ── Aarogya Design Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Primary palette */
+  --teal: #0F6E56;
+  --teal-mid: #1D9E75;
+  --teal-light: #E1F5EE;
+  --teal-dark: #085041;
+  
+  /* Accent palette */
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  
+  /* Neutrals */
+  --off-white: #F7F6F2;
+  --ink: #1A1A1A;
+  --ink-mid: #4A4A4A;
+  --ink-light: #8A8A8A;
+  --white: #FFFFFF;
+  --border: rgba(0, 0, 0, 0.08);
+  
+  /* Semantic status colors */
+  --status-confirmed: #16A34A;
+  --status-pending: #D97706;
+  --status-declined: #DC2626;
+  --status-completed: #2563EB;
+  --status-cancelled: #6B7280;
+  
+  /* Backgrounds */
+  --background: var(--off-white);
+  --foreground: var(--ink);
+}
+
+/* ── Tailwind v4 Theme Inline ──────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  --color-teal: var(--teal);
+  --color-teal-mid: var(--teal-mid);
+  --color-teal-light: var(--teal-light);
+  --color-teal-dark: var(--teal-dark);
+  
+  --color-amber: var(--amber);
+  --color-amber-light: var(--amber-light);
+  
+  --color-off-white: var(--off-white);
+  --color-ink: var(--ink);
+  --color-ink-mid: var(--ink-mid);
+  --color-ink-light: var(--ink-light);
+  --color-border: var(--border);
+  
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-pending: var(--status-pending);
+  --color-status-declined: var(--status-declined);
+  --color-status-completed: var(--status-completed);
+  --color-status-cancelled: var(--status-cancelled);
+  
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-fraunces);
+}
+
+/* ── Base styles ───────────────────────────────────────────────────────── */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+}
+
+/* ── Smooth scrolling ──────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Focus styles for accessibility ────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* ── Custom scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-light);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-mid);
+}
