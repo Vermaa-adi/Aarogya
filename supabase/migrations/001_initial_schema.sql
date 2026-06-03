@@ -113,18 +113,40 @@ CREATE INDEX idx_appointments_slot     ON appointments(slot_start);
 CREATE INDEX idx_doctors_verified      ON doctor_profiles(is_verified);
 CREATE INDEX idx_records_patient       ON medical_records(patient_id);
 
--- ── Auth Trigger (auto-create users row on signup) ────────────────────────
+-- ── Auth Trigger (auto-create users row and profiles on signup) ───────────
 
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_role user_role;
+  v_name text;
 BEGIN
+  v_role := COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'PATIENT');
+  v_name := COALESCE(
+    NEW.raw_user_meta_data->>'name',
+    NEW.raw_user_meta_data->>'full_name',
+    split_part(NEW.email, '@', 1),
+    'User'
+  );
+
+  -- Insert into public identity table
   INSERT INTO public.users (id, email, phone, role)
   VALUES (
     NEW.id,
     NEW.email,
     NEW.phone,
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'PATIENT')
+    v_role
   );
+
+  -- Auto-create profile based on user role
+  IF v_role = 'PATIENT' THEN
+    INSERT INTO public.patient_profiles (user_id, name)
+    VALUES (NEW.id, v_name);
+  ELSIF v_role = 'DOCTOR' THEN
+    INSERT INTO public.doctor_profiles (user_id, name)
+    VALUES (NEW.id, v_name);
+  END IF;
+
   RETURN NEW;
 END;
 $$;
@@ -136,7 +158,7 @@ CREATE TRIGGER on_auth_user_created
 -- ── Rating Recalculation Trigger ──────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION recalculate_doctor_rating()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   UPDATE doctor_profiles
   SET

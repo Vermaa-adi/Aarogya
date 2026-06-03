@@ -7,24 +7,34 @@ const DOCTOR_ROUTES = ["/doctor/dashboard", "/doctor/profile", "/doctor/requests
 const ADMIN_ROUTES = ["/admin/approvals"];
 const AUTH_ROUTES = ["/auth"];
 
+// Helper to check if a pathname matches a route boundary-safely
+const isMatch = (pathname: string, route: string) =>
+  pathname === route || pathname.startsWith(route + "/");
+
 export async function middleware(request: NextRequest) {
   const { user, supabaseResponse, supabase } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  // ── Auth routes: redirect away if already signed in ──
-  if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
-    if (user) {
-      // Redirect to the appropriate dashboard based on role
-      const { data: userData } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+  const isAuthRoute = AUTH_ROUTES.some((route) => isMatch(pathname, route));
 
-      if (userData?.role === "DOCTOR") {
+  // ── Auth routes: redirect away if already signed in ──
+  if (isAuthRoute) {
+    if (user) {
+      // Get role from metadata first, fallback to DB query
+      let role = user.user_metadata?.role || user.app_metadata?.role;
+      if (!role) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        role = userData?.role;
+      }
+
+      if (role === "DOCTOR") {
         return NextResponse.redirect(new URL("/doctor/dashboard", request.url));
       }
-      if (userData?.role === "ADMIN") {
+      if (role === "ADMIN") {
         return NextResponse.redirect(new URL("/admin/approvals", request.url));
       }
       return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -33,9 +43,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Protected routes: require auth ──
-  const isPatientRoute = PATIENT_ROUTES.some((route) => pathname.startsWith(route));
-  const isDoctorRoute = DOCTOR_ROUTES.some((route) => pathname.startsWith(route));
-  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+  const isPatientRoute = PATIENT_ROUTES.some((route) => isMatch(pathname, route));
+  const isDoctorRoute = DOCTOR_ROUTES.some((route) => isMatch(pathname, route));
+  const isAdminRoute = ADMIN_ROUTES.some((route) => isMatch(pathname, route));
   const isDoctorPending = pathname === "/doctor/verification-pending";
 
   if (!isPatientRoute && !isDoctorRoute && !isAdminRoute && !isDoctorPending) {
@@ -50,14 +60,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Get user role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const role = userData?.role;
+  // Get user role from metadata first, fallback to DB query
+  let role = user.user_metadata?.role || user.app_metadata?.role;
+  if (!role) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    role = userData?.role;
+  }
 
   // ── Patient routes ──
   if (isPatientRoute && role !== "PATIENT") {
@@ -69,14 +81,18 @@ export async function middleware(request: NextRequest) {
     if (role !== "DOCTOR") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
-    // Check verification
-    const { data: doctorProfile } = await supabase
-      .from("doctor_profiles")
-      .select("is_verified")
-      .eq("user_id", user.id)
-      .single();
+    // Check verification status from metadata first, fallback to DB query
+    let isVerified = user.user_metadata?.is_verified;
+    if (isVerified === undefined) {
+      const { data: doctorProfile } = await supabase
+        .from("doctor_profiles")
+        .select("is_verified")
+        .eq("user_id", user.id)
+        .single();
+      isVerified = doctorProfile?.is_verified;
+    }
 
-    if (!doctorProfile?.is_verified) {
+    if (!isVerified) {
       return NextResponse.redirect(new URL("/doctor/verification-pending", request.url));
     }
   }
