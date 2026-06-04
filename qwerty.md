@@ -1,0 +1,1 @@
+A sample file too become a contributor
