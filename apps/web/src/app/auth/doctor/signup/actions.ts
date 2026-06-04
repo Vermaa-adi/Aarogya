@@ -7,7 +7,7 @@ const doctorSignupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  specialties: z.string().min(1, "At least one specialty is required"),
+  specialties: z.array(z.string()).min(1, "At least one specialty is required"),
   licenseNo: z.string().min(3, "License number is required"),
 });
 
@@ -15,7 +15,7 @@ export async function signUpDoctor(prevState: unknown, formData: FormData) {
   const rawFullName = formData.get("fullName") as string;
   const rawEmail = formData.get("email") as string;
   const rawPassword = formData.get("password") as string;
-  const rawSpecialties = formData.get("specialties") as string;
+  const rawSpecialties = formData.getAll("specialties") as string[];
   const rawLicenseNo = formData.get("licenseNo") as string;
 
   const result = doctorSignupSchema.safeParse({
@@ -41,10 +41,7 @@ export async function signUpDoctor(prevState: unknown, formData: FormData) {
   }
 
   const { fullName, email, password, specialties, licenseNo } = result.data;
-  const specialtiesArray = specialties
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const specialtiesArray = specialties;
 
   const supabase = await createClient();
   if (!supabase) {

@@ -143,8 +143,19 @@ BEGIN
     INSERT INTO public.patient_profiles (user_id, name)
     VALUES (NEW.id, v_name);
   ELSIF v_role = 'DOCTOR' THEN
-    INSERT INTO public.doctor_profiles (user_id, name)
-    VALUES (NEW.id, v_name);
+    INSERT INTO public.doctor_profiles (user_id, name, specialties, license_no, license_doc_url)
+    VALUES (
+      NEW.id,
+      v_name,
+      CASE 
+        WHEN jsonb_typeof(NEW.raw_user_meta_data->'specialties') = 'array' THEN
+          ARRAY(SELECT jsonb_array_elements_text(NEW.raw_user_meta_data->'specialties'))
+        ELSE
+          '{}'::TEXT[]
+      END,
+      NEW.raw_user_meta_data->>'license_no',
+      NEW.raw_user_meta_data->>'license_doc_url'
+    );
   END IF;
 
   RETURN NEW;
