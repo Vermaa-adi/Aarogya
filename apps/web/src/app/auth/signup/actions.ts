@@ -1,12 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const patientSignupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
+  email: z.string().email("Please enter a valid email"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits").optional().or(z.literal("")),
   password: z.string().min(6, "Password must be at least 6 characters"),
   consent: z.literal(true, {
     errorMap: () => ({ message: "You must consent to the Privacy Policy to proceed" }),
@@ -14,7 +15,7 @@ const patientSignupSchema = z.object({
 });
 
 function formatPhoneNumber(phone: string): string {
-  let cleaned = phone.replace(/[\s()-]+/g, ""); // remove spaces, dashes, parens
+  let cleaned = phone.replace(/[\s()-]+/g, "");
   if (!cleaned.startsWith("+")) {
     if (cleaned.length === 10) {
       cleaned = "+91" + cleaned;
@@ -32,7 +33,6 @@ export async function signUpPatient(prevState: unknown, formData: FormData) {
   const rawPassword = formData.get("password") as string;
   const rawConsent = formData.get("consent") === "on";
 
-  // Validate fields
   const result = patientSignupSchema.safeParse({
     fullName: rawFullName,
     phone: rawPhone,
@@ -56,18 +56,19 @@ export async function signUpPatient(prevState: unknown, formData: FormData) {
   }
 
   const { fullName, phone, email, password } = result.data;
-  const formattedPhone = formatPhoneNumber(phone);
+  const formattedPhone = phone ? formatPhoneNumber(phone) : undefined;
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
-    phone: formattedPhone,
-    password: password,
+  // 1. Sign up user using anon client to trigger standard OTP email
+  const { data: authData, error } = await supabase.auth.signUp({
+    email,
+    password,
     options: {
       data: {
         role: "PATIENT",
         name: fullName,
-        email: email || undefined,
+        phone: formattedPhone || undefined,
       },
     },
   });
@@ -79,8 +80,31 @@ export async function signUpPatient(prevState: unknown, formData: FormData) {
     };
   }
 
-  return {
-    success: true,
-    phone: formattedPhone,
-  };
+  // 2. Insert public records using admin client so they are ready upon verification
+  // (We use admin client because RLS might prevent unverified users from inserting)
+  if (authData?.user) {
+    const adminClient = await createAdminClient();
+    if (adminClient) {
+      await adminClient.from("users").upsert({
+        id: authData.user.id,
+        email,
+        phone: formattedPhone || null,
+        role: "PATIENT",
+      }, { onConflict: "id" });
+
+      await adminClient.from("patient_profiles").upsert({
+        user_id: authData.user.id,
+        name: fullName,
+      }, { onConflict: "user_id" });
+    }
+  }
+
+  // If session exists, email confirmation might be disabled in Supabase, meaning they are fully logged in.
+  if (authData?.session) {
+    await supabase.auth.signOut();
+    return { success: true, emailOtpRequired: false };
+  }
+
+  // Return success with flag to show OTP form
+  return { success: true, emailOtpRequired: true, email };
 }

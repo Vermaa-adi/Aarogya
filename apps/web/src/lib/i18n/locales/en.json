@@ -1,0 +1,21 @@
+{
+  "landing": {
+    "title": "Aarogya: Virtual Care, Anywhere",
+    "subtitle": "Connect with top medical professionals from the comfort of your home. Secure, fast, and reliable telemedicine.",
+    "cta_patient": "I am a Patient",
+    "cta_doctor": "I am a Doctor",
+    "features_title": "Why Choose Aarogya?",
+    "feature_1_title": "24/7 Access",
+    "feature_1_desc": "Book consultations at any time, from anywhere.",
+    "feature_2_title": "Top Doctors",
+    "feature_2_desc": "All our medical professionals are strictly vetted.",
+    "feature_3_title": "Secure Records",
+    "feature_3_desc": "Your medical data is encrypted and private.",
+    "footer": "© 2026 Aarogya. All rights reserved."
+  },
+  "nav": {
+    "login": "Login",
+    "dashboard": "Dashboard",
+    "doctors": "Find Doctors"
+  }
+}

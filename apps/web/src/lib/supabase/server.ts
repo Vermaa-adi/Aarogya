@@ -39,9 +39,24 @@ export async function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || url === "your-supabase-url" || !serviceRoleKey || serviceRoleKey === "your-service-role-key") {
-    return null as unknown as ReturnType<typeof createBaseClient>;
+  // Check for any common placeholder values
+  const placeholders = [
+    "your-service-role-key",
+    "your_supabase_service_role_key",
+    "your_service_role_key",
+  ];
+
+  const isUrlMissing = !url || url.includes("your-supabase") || url.includes("your_supabase") || url.length < 10;
+  const isKeyMissing = !serviceRoleKey || serviceRoleKey.length < 20 || placeholders.includes(serviceRoleKey.trim());
+
+  if (isUrlMissing || isKeyMissing) {
+    return null;
   }
 
-  return createBaseClient(url, serviceRoleKey);
+  return createBaseClient(url, serviceRoleKey.trim(), {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

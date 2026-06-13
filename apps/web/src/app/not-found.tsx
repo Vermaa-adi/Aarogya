@@ -53,7 +53,7 @@ export default function NotFound() {
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-cream border border-border text-ink text-sm font-medium rounded-lg transition-colors duration-150 no-underline"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-off-white border border-border text-ink text-sm font-medium rounded-lg transition-colors duration-150 no-underline"
           >
             Dashboard
           </Link>

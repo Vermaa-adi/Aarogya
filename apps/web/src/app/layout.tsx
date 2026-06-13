@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
+import { getCurrentLocale } from "@/lib/i18n/dictionaries";
+import LanguageSelector from "@/components/LanguageSelector";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -30,11 +32,12 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getCurrentLocale();
   return (
     <html
       lang="en"
@@ -49,6 +52,10 @@ export default function RootLayout({
 
         {/* Main content */}
         <main className="flex-1">{children}</main>
+
+        <div className="fixed bottom-4 right-4 z-50">
+          <LanguageSelector currentLocale={locale} />
+        </div>
       </body>
     </html>
   );

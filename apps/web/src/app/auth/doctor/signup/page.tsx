@@ -32,7 +32,12 @@ export default function DoctorSignupPage() {
 
   useEffect(() => {
     if (state?.success) {
-      router.push("/doctor/verification-pending");
+      if (state.emailOtpRequired && state.email) {
+        router.push(`/auth/verify-otp?email=${encodeURIComponent(state.email)}&type=signup`);
+      } else {
+        router.push("/auth/doctor/login");
+      }
+      router.refresh();
     }
   }, [state, router]);
 
@@ -87,6 +92,28 @@ export default function DoctorSignupPage() {
           />
           {state?.errors?.email && (
             <p className="text-xs text-red-600 mt-1">{state.errors.email}</p>
+          )}
+        </div>
+
+        {/* Phone Number (Optional) */}
+        <div>
+          <label htmlFor="phone" className="block text-xs font-medium text-ink-mid mb-1">
+            Phone Number <span className="text-ink-light font-normal">(Optional)</span>
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-light">
+              🇮🇳
+            </span>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="98765 43210"
+              className="w-full pl-8 pr-3 py-2 border border-border rounded-lg text-sm text-ink bg-off-white outline-none focus:border-teal transition-all"
+            />
+          </div>
+          {state?.errors?.phone && (
+            <p className="text-xs text-red-600 mt-1">{state.errors.phone}</p>
           )}
         </div>
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const dict = await getDictionary();
   return (
     <div className="font-sans">
       {/* ── NAVBAR ── */}
@@ -36,7 +38,7 @@ export default function LandingPage() {
               href="/auth/login"
               className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-teal border border-teal hover:bg-teal-light transition-colors duration-150 no-underline"
             >
-              Log in
+              {dict.nav.login}
             </Link>
             <Link
               href="/auth/signup"
@@ -61,28 +63,24 @@ export default function LandingPage() {
               🇮🇳 Made for India
             </span>
             <h1 className="font-serif text-[clamp(38px,5vw,58px)] font-medium text-white leading-[1.15] mb-5">
-              Healthcare that<br />
-              <em className="italic text-[#9FE1CB]">comes to you,</em><br />
-              wherever you are.
+              {dict.landing.title}
             </h1>
             <p className="text-[17px] text-white/75 leading-[1.75] max-w-[480px] mb-8">
-              Connect with 1,200+ verified doctors in your language. Book
-              consultations, share records, get prescriptions — all from your
-              phone.
+              {dict.landing.subtitle}
             </p>
             <div className="flex gap-2.5 flex-wrap mb-10">
               <Link
                 href="/auth/signup"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[15px] font-medium bg-white text-teal hover:bg-off-white transition-colors duration-150 no-underline"
               >
-                📅 Book a consultation
+                📅 {dict.landing.cta_patient}
               </Link>
-              <a
-                href="#how-it-works"
+              <Link
+                href="/auth/doctor/login"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[15px] font-medium bg-white/[0.12] text-white border border-white/20 hover:bg-white/[0.2] transition-colors duration-150 no-underline"
               >
-                ▶ See how it works
-              </a>
+                👨‍⚕️ {dict.landing.cta_doctor}
+              </Link>
             </div>
             {/* Trust stats */}
             <div className="flex gap-8 flex-wrap">
@@ -411,16 +409,16 @@ export default function LandingPage() {
               </p>
             </div>
             {[
-              ["Patients", ["Find doctors", "Book appointment", "My records", "Prescriptions", "Support"]],
-              ["Doctors", ["Join as doctor", "Doctor dashboard", "Verification", "Fees & payments", "Help centre"]],
-              ["Company", ["About us", "FAQ", "Privacy policy", "Terms of service", "Contact"]],
+              ["Patients", [{label: "Find doctors", href: "/doctors"}, {label: "Book appointment", href: "/auth/signup"}, {label: "My records", href: "/auth/login"}, {label: "Support", href: "#"}]],
+              ["Doctors", [{label: "Join as doctor", href: "/auth/doctor/signup"}, {label: "Doctor dashboard", href: "/auth/doctor/login"}, {label: "Help centre", href: "#"}]],
+              ["Company", [{label: "About us", href: "#"}, {label: "Admin Portal", href: "/auth/admin/login"}, {label: "Admin Signup", href: "/auth/admin/signup"}, {label: "Contact", href: "#"}]],
             ].map(([title, links]) => (
               <div key={title as string}>
                 <p className="text-sm font-medium text-white mb-3.5">{title as string}</p>
-                {(links as string[]).map((l) => (
-                  <p key={l} className="text-sm mb-2 cursor-pointer hover:text-white transition-colors duration-150">
-                    {l}
-                  </p>
+                {(links as {label: string, href: string}[]).map((l) => (
+                  <Link key={l.label} href={l.href} className="block text-sm mb-2 cursor-pointer hover:text-white transition-colors duration-150 no-underline text-white/70">
+                    {l.label}
+                  </Link>
                 ))}
               </div>
             ))}

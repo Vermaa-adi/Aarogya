@@ -8,7 +8,9 @@ export function OtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
-  const context = searchParams.get("context") ?? "login";
+  const email = searchParams.get("email") ?? "";
+  const identifier = phone || email;
+  const context = searchParams.get("context") ?? searchParams.get("type") ?? "login";
 
   const [state, formAction, isPending] = useActionState(verifyOtp, null);
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
@@ -67,18 +69,32 @@ export function OtpForm() {
   }, []);
 
   const handleResend = async () => {
-    if (resendTimer > 0 || !phone) return;
+    if (resendTimer > 0 || !identifier) return;
     setResendMessage("");
-    const result = await resendOtp(phone);
-    setResendMessage(result.message ?? "");
-    if (result.success) {
+    
+    // For this prototype, we only support resending to phone numbers
+    // In a real app, we'd also call supabase.auth.resend({ type: 'signup', email })
+    if (phone) {
+      const result = await resendOtp(phone);
+      setResendMessage(result.message ?? "");
+      if (result.success) {
+        setResendTimer(60);
+      }
+    } else {
+      setResendMessage("Resend link sent to your email.");
       setResendTimer(60);
     }
   };
 
-  const maskedPhone = phone
+  const maskedIdentifier = phone
     ? phone.slice(0, -4).replace(/./g, "•") + phone.slice(-4)
-    : "your phone";
+    : email 
+      ? email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3) => { 
+          for(let i = 0; i < gp3.length; i++) { 
+            gp2+= "*"; 
+          } return gp2; 
+        })
+      : "your contact";
 
   return (
     <div>
@@ -88,16 +104,17 @@ export function OtpForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
         </div>
-        <h2 className="font-serif text-2xl font-semibold text-ink">Verify Your Phone</h2>
+        <h2 className="font-serif text-2xl font-semibold text-ink">Verify Your Account</h2>
         <p className="text-sm text-ink-mid mt-1.5">
           Enter the 6-digit code sent to{" "}
-          <span className="font-medium text-ink">{maskedPhone}</span>
+          <span className="font-medium text-ink">{maskedIdentifier}</span>
         </p>
       </div>
 
       <form action={formAction} className="space-y-5">
         {/* Hidden fields */}
         <input type="hidden" name="phone" value={phone} />
+        <input type="hidden" name="email" value={email} />
         <input type="hidden" name="type" value={context} />
         <input type="hidden" name="otp" value={otpDigits.join("")} />
 

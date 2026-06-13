@@ -10,9 +10,13 @@ export default function PatientSignupPage() {
   const [state, formAction, isPending] = useActionState(signUpPatient, null);
 
   useEffect(() => {
-    if (state?.success && state.phone) {
-      // Redirect to OTP verification page
-      router.push(`/auth/verify-otp?phone=${encodeURIComponent(state.phone)}&type=signup`);
+    if (state?.success) {
+      if (state.emailOtpRequired && state.email) {
+        router.push(`/auth/verify-otp?email=${encodeURIComponent(state.email)}&type=signup`);
+      } else {
+        router.push("/auth/login");
+      }
+      router.refresh();
     }
   }, [state, router]);
 
@@ -52,10 +56,28 @@ export default function PatientSignupPage() {
           )}
         </div>
 
-        {/* Phone Number */}
+        {/* Email Address */}
+        <div>
+          <label htmlFor="email" className="block text-xs font-medium text-ink-mid mb-1">
+            Email Address *
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="name@example.com"
+            className="w-full px-3.5 py-2 border border-border rounded-lg text-sm text-ink bg-off-white outline-none focus:border-teal transition-all"
+          />
+          {state?.errors?.email && (
+            <p className="text-xs text-red-600 mt-1">{state.errors.email}</p>
+          )}
+        </div>
+
+        {/* Phone Number (Optional) */}
         <div>
           <label htmlFor="phone" className="block text-xs font-medium text-ink-mid mb-1">
-            Phone Number *
+            Phone Number <span className="text-ink-light font-normal">(Optional)</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-light">
@@ -65,33 +87,12 @@ export default function PatientSignupPage() {
               id="phone"
               name="phone"
               type="tel"
-              required
               placeholder="98765 43210"
               className="w-full pl-8 pr-3 py-2 border border-border rounded-lg text-sm text-ink bg-off-white outline-none focus:border-teal transition-all"
             />
           </div>
-          <p className="text-[10px] text-ink-light mt-1">
-            Country code +91 will be added automatically if omitted.
-          </p>
           {state?.errors?.phone && (
             <p className="text-xs text-red-600 mt-1">{state.errors.phone}</p>
-          )}
-        </div>
-
-        {/* Email Address (Optional) */}
-        <div>
-          <label htmlFor="email" className="block text-xs font-medium text-ink-mid mb-1">
-            Email Address <span className="text-ink-light font-normal">(Optional)</span>
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="name@example.com"
-            className="w-full px-3.5 py-2 border border-border rounded-lg text-sm text-ink bg-off-white outline-none focus:border-teal transition-all"
-          />
-          {state?.errors?.email && (
-            <p className="text-xs text-red-600 mt-1">{state.errors.email}</p>
           )}
         </div>
 
@@ -142,10 +143,10 @@ export default function PatientSignupPage() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Sending OTP...
+              Creating Account...
             </>
           ) : (
-            "Verify Phone & Sign Up"
+            "Create Account"
           )}
         </button>
       </form>

@@ -54,19 +54,41 @@ export async function loginWithEmail(prevState: unknown, formData: FormData) {
     };
   }
 
-  // Ensure role is PATIENT
+  // Determine role — the trigger may not have created the users row yet
+  let role: string | undefined;
+
   const { data: userData } = await supabase
     .from("users")
     .select("role")
     .eq("id", authData.user.id)
     .single();
 
-  if (userData?.role !== "PATIENT") {
-    // Sign out user to avoid invalid session caching
+  if (userData) {
+    role = userData.role;
+  } else {
+    // Row doesn't exist yet — read role from auth metadata and create it
+    role = authData.user.user_metadata?.role || "PATIENT";
+    await supabase.from("users").insert({
+      id: authData.user.id,
+      email: authData.user.email,
+      phone: authData.user.user_metadata?.phone || null,
+      role: role,
+    });
+
+    // Also create patient profile if the role is PATIENT
+    if (role === "PATIENT") {
+      await supabase.from("patient_profiles").insert({
+        user_id: authData.user.id,
+        name: authData.user.user_metadata?.name || "Patient",
+      });
+    }
+  }
+
+  if (role !== "PATIENT") {
     await supabase.auth.signOut();
     return {
       success: false,
-      message: "Access denied: This portal is for patients only.",
+      message: "Access denied: This portal is for patients only. Use Doctor Login instead.",
     };
   }
 
